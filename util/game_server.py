@@ -5,7 +5,7 @@ import abc
 
 
 class GameServer(abc.ABC):
-    def __init__(self, port: int):
+    def __init__(self, port: int, tick_rate: int = 0.1):
         super().__init__()
 
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -15,6 +15,8 @@ class GameServer(abc.ABC):
         # Server threads
         self.accept_thread = None
         self.connections = []
+
+        self.tick_rate = tick_rate
 
     def handle_conn(self, conn: socket.socket, address):
         self.on_connect(address)
@@ -45,7 +47,7 @@ class GameServer(abc.ABC):
         # Run game loop
         while True:
             self.update()
-            time.sleep(0.1)
+            time.sleep(self.tick_rate)
 
     @abc.abstractmethod
     def on_connect(self, address):
