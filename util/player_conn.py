@@ -3,7 +3,7 @@ import struct
 from threading import Thread
 from typing import Any, Callable
 
-from util.tty import tty_to_fd, tty_write
+from util.tty import tty_close, tty_to_fd, tty_write
 
 
 class PlayerConnection(Thread):
@@ -70,6 +70,7 @@ class PlayerConnection(Thread):
             except Exception:
                 # Stop if disconnected or if error occurs processing packet
                 break
+        self.close()
         self._on_disconnect(self)
 
 
@@ -81,3 +82,8 @@ class PlayerConnection(Thread):
         value = struct.unpack("<i", self.socket.recv(4))
         self.socket.settimeout(None)
         return value[0]
+
+    def close(self):
+        tty_close(self.tty)
+        self.socket.shutdown(socket.SHUT_RDWR)
+        self.socket.close()

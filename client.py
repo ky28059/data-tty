@@ -30,6 +30,7 @@ def get_input():
         if ord(ch) == 3 in [3, 4, 28]:
             break
         conn.send(b'\x04' + int.to_bytes(ord(ch), 1, "little"))
+    conn.shutdown(socket.SHUT_RDWR)
     conn.close()
 
 def send_window_dimensions(*_):
