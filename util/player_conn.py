@@ -1,9 +1,9 @@
 import socket
 import struct
 from threading import Thread
-from typing import Callable, Any
+from typing import Any, Callable
 
-from util.tty import tty_write, tty_to_fd
+from util.tty import tty_to_fd, tty_write
 
 
 class PlayerConnection(Thread):
@@ -11,6 +11,7 @@ class PlayerConnection(Thread):
         self,
         client_socket: socket.socket,
         on_connect: Callable[[Any], None],  # TODO: "self"
+        on_disconnect: Callable[[Any], None],  # TODO: "self"
         on_input: Callable[[Any, str], None],
     ):
         super().__init__(daemon=True)
@@ -23,6 +24,7 @@ class PlayerConnection(Thread):
 
         # Private listeners inherited from the server
         self._on_connect = on_connect
+        self._on_disconnect = on_disconnect
         self._on_input = on_input
 
     def process_packet(self):
@@ -63,7 +65,13 @@ class PlayerConnection(Thread):
 
         # Continuously read and process user input
         while True:
-            self.process_packet()
+            try:
+                self.process_packet()
+            except Exception:
+                # Stop if disconnected or if error occurs processing packet
+                break
+        self._on_disconnect(self)
+
 
     def write(self, data: bytes):
         tty_write(self.tty, data)

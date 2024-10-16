@@ -1,7 +1,7 @@
+import abc
 import socket
 import time
 from threading import Thread
-import abc
 
 from util.player_conn import PlayerConnection
 
@@ -27,8 +27,10 @@ class GameServer(abc.ABC):
             (client_socket, address) = self.server.accept()
             print("Received connection: ", client_socket, address)
 
-            conn = PlayerConnection(client_socket, on_connect=self.on_connect, on_input=self.on_input)
-            self.connections.append(conn)  # TODO: handle thread exception
+            conn = PlayerConnection(client_socket,
+                                    on_connect=self.add_player,
+                                    on_disconnect=self.remove_player,
+                                    on_input=self.on_input)
             conn.start()
 
     def start(self):
@@ -41,8 +43,20 @@ class GameServer(abc.ABC):
             self.update()
             time.sleep(self.tick_rate)
 
+    def add_player(self, conn: PlayerConnection):
+        self.connections.append(conn)
+        self.on_connect(conn)
+
+    def remove_player(self, conn: PlayerConnection):
+        self.connections.remove(conn)
+        self.on_disconnect(conn)
+
     @abc.abstractmethod
     def on_connect(self, conn: PlayerConnection):
+        pass
+
+    @abc.abstractmethod
+    def on_disconnect(self, conn: PlayerConnection):
         pass
 
     @abc.abstractmethod
