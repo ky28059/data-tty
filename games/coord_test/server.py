@@ -18,6 +18,10 @@ class CoordServer(GameServer):
 
         self.player_coords[conn.tty] = [0, 0]
 
+    def on_disconnect(self, conn):
+        print('Lost connection to', conn.tty)
+        del self.player_coords[conn.tty]
+
     def on_input(self, conn, key: str):
         print(conn.width, conn.height, key)
         match key:
