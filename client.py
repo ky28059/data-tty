@@ -32,13 +32,12 @@ def get_input():
         conn.send(b'\x04' + int.to_bytes(ord(ch), 1, "little"))
     conn.close()
 
-def handle_resize(_signum, _frame):
+def send_window_dimensions(*_):
     size = os.get_terminal_size()
-    print(f"Terminal resized to {size.columns}x{size.lines}")
     conn.send(b'\x02' + struct.pack("<I", size.columns) + struct.pack("<I", size.lines))
 
-signal.signal(signal.SIGWINCH, handle_resize)
-handle_resize()
+signal.signal(signal.SIGWINCH, send_window_dimensions)
+send_window_dimensions()
 
 input_thread = threading.Thread(target=get_input, daemon=True)
 input_thread.start()
