@@ -21,13 +21,13 @@ class CoordServer(GameServer):
     def on_input(self, conn, key: str):
         print(conn.width, conn.height, key)
         match key:
-            case b"a":
+            case "a":
                 self.player_coords[conn.tty][0] -= 1
-            case b"d":
+            case "d":
                 self.player_coords[conn.tty][0] += 1
-            case b"w":
+            case "w":
                 self.player_coords[conn.tty][1] -= 1
-            case b"s":
+            case "s":
                 self.player_coords[conn.tty][1] += 1
 
     def update(self):
