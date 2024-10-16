@@ -1,4 +1,4 @@
-from util.game_server import GameServer
+from .. util.game_server import GameServer
 
 
 class CoordServer(GameServer):
