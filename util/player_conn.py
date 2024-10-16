@@ -3,14 +3,15 @@ import struct
 from threading import Thread
 from typing import Callable, Self
 
-from tty import tty_write
+from tty import tty_write, tty_to_fd
 
 
 class PlayerConnection(Thread):
     def __init__(
         self,
         client_socket: socket.socket,
-        on_input: Callable[[Self, str], None]
+        on_connect: Callable[[Self], None],
+        on_input: Callable[[Self, str], None],
     ):
         super().__init__(daemon=True)
 
@@ -20,6 +21,8 @@ class PlayerConnection(Thread):
         self.width = 80
         self.height = 25
 
+        # Private listeners inherited from the server
+        self._on_connect = on_connect
         self._on_input = on_input
 
     def process_packet(self):
@@ -52,7 +55,11 @@ class PlayerConnection(Thread):
             raise Exception(f"Missing tty packet {packet_type}")
         self.socket.settimeout(None)
 
-        self.tty = self.get_int()
+        tty_id = self.get_int()
+        self.tty = tty_to_fd(tty_id)
+
+        # Once initialized, call `on_connect()`
+        self._on_connect(self)
 
         # Continuously read and process user input
         while True:

@@ -27,9 +27,8 @@ class GameServer(abc.ABC):
             (client_socket, address) = self.server.accept()
             print("Received connection: ", client_socket, address)
 
-            conn = PlayerConnection(client_socket, address)
-            self.on_connect(address)
-            self.connections.append(conn)
+            conn = PlayerConnection(client_socket, on_connect=self.on_connect, on_input=self.on_input)
+            self.connections.append(conn)  # TODO: handle thread exception
             conn.start()
 
     def start(self):
