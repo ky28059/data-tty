@@ -3,6 +3,8 @@ import time
 from threading import Thread
 import abc
 
+from player_conn import PlayerConnection
+
 
 class GameServer(abc.ABC):
     def __init__(self, port: int, tick_rate: int = 0.1):
@@ -18,16 +20,6 @@ class GameServer(abc.ABC):
 
         self.tick_rate = tick_rate
 
-    def handle_conn(self, conn: socket.socket, address):
-        self.on_connect(address)
-
-        # Continuously read and process user input
-        while True:
-            user_input = conn.recv(1).decode()
-            if not user_input:
-                break  # TODO?
-            self.on_input(address, user_input)
-
     def wait_for_conns(self):
         self.server.listen()
 
@@ -35,7 +27,8 @@ class GameServer(abc.ABC):
             (client_socket, address) = self.server.accept()
             print("Received connection: ", client_socket, address)
 
-            conn = Thread(target=self.handle_conn, args=(client_socket, address), daemon=True)
+            conn = PlayerConnection(client_socket, address)
+            self.on_connect(address)
             self.connections.append(conn)
             conn.start()
 
@@ -50,11 +43,11 @@ class GameServer(abc.ABC):
             time.sleep(self.tick_rate)
 
     @abc.abstractmethod
-    def on_connect(self, address):
+    def on_connect(self, conn: PlayerConnection):
         pass
 
     @abc.abstractmethod
-    def on_input(self, address, user_input: str):
+    def on_input(self, conn: PlayerConnection, user_input: str):
         pass
 
     @abc.abstractmethod
