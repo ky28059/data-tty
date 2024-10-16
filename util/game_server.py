@@ -3,7 +3,7 @@ import time
 from threading import Thread
 import abc
 
-from . player_conn import PlayerConnection
+from util.player_conn import PlayerConnection
 
 
 class GameServer(abc.ABC):

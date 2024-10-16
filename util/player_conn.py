@@ -3,7 +3,7 @@ import struct
 from threading import Thread
 from typing import Callable, Any
 
-from . tty import tty_write, tty_to_fd
+from util.tty import tty_write, tty_to_fd
 
 
 class PlayerConnection(Thread):
