@@ -1,25 +1,16 @@
 import socket
 import time
 from threading import Thread
-from typing import Callable, Any
+import abc
 
 
-class GameServer(Thread):
-    def __init__(
-        self,
-        port: int,
-        on_connect: Callable[[Any], None],
-        on_input: Callable[[Any, str], None],
-    ):
+class GameServer(abc.ABC):
+    def __init__(self, port: int):
         super().__init__()
 
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.bind(("localhost", port))
         print(f"Started server on port {port}")
-
-        # Save listeners
-        self.on_connect = on_connect
-        self.on_input = on_input
 
         # Server threads
         self.accept_thread = None
@@ -46,13 +37,24 @@ class GameServer(Thread):
             self.connections.append(conn)
             conn.start()
 
-    def run(self):
+    def start(self):
         # Handle connections in another thread
         self.accept_thread = Thread(target=self.wait_for_conns, daemon=True)
         self.accept_thread.start()
 
         # Run game loop
         while True:
-            # TODO: game loop
-
+            self.update()
             time.sleep(0.1)
+
+    @abc.abstractmethod
+    def on_connect(self, address):
+        pass
+
+    @abc.abstractmethod
+    def on_input(self, address, user_input: str):
+        pass
+
+    @abc.abstractmethod
+    def update(self):
+        pass

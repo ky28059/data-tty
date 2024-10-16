@@ -1,11 +1,20 @@
 from util.game_server import GameServer
 
-if __name__ == '__main__':
-    server = GameServer(
-        port=5003,
-        on_connect=print,
-        on_input=print
-    )
 
+class TestServer(GameServer):
+    def __init__(self):
+        super().__init__(5003)
+
+    def on_connect(self, address):
+        print('Connected to server')
+
+    def on_input(self, address, user_input: str):
+        print(user_input)
+
+    def update(self):
+        pass
+
+
+if __name__ == '__main__':
+    server = TestServer()
     server.start()
-    server.join()
