@@ -87,7 +87,7 @@ class PlayerConnection(Thread):
 
     def get_str(self):
         self.socket.settimeout(1)
-        length = int.from_bytes(self.socket.recv(1), 1, "little")
+        length = int.from_bytes(self.socket.recv(1), "little")
         value = self.socket.recv(length)
         self.socket.settimeout(None)
         return value
