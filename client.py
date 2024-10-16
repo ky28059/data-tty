@@ -32,7 +32,7 @@ def get_input():
         conn.send(b'\x04' + int.to_bytes(ord(ch), 1, "little"))
     conn.close()
 
-def handle_resize():
+def handle_resize(_signum, _frame):
     size = os.get_terminal_size()
     print(f"Terminal resized to {size.columns}x{size.lines}")
     conn.send(b'\x02' + struct.pack("<I", size.columns) + struct.pack("<I", size.lines))
