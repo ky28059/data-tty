@@ -1,17 +1,17 @@
 import socket
 import struct
 from threading import Thread
-from typing import Callable, Self
+from typing import Callable, Any
 
-from tty import tty_write, tty_to_fd
+from .tty import tty_write, tty_to_fd
 
 
 class PlayerConnection(Thread):
     def __init__(
         self,
         client_socket: socket.socket,
-        on_connect: Callable[[Self], None],
-        on_input: Callable[[Self, str], None],
+        on_connect: Callable[[Any], None],  # TODO: "self"
+        on_input: Callable[[Any, str], None],
     ):
         super().__init__(daemon=True)
 
