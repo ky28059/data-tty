@@ -18,6 +18,7 @@ class PlayerConnection(Thread):
 
         self.socket = client_socket
         self.tty = None
+        self.name = None
 
         self.width = 80
         self.height = 25
@@ -33,13 +34,12 @@ class PlayerConnection(Thread):
             raise Exception('No packet received')
 
         match packet_type:
-            case b'\x01':  # id packet
+            case b'\x01':  # tty/name packet
                 raise Exception("Disallowed tty packet")
 
             case b'\x02':  # resize packet
                 self.width = self.get_int()
                 self.height = self.get_int()
-                print(f"New window: {self.width}, {self.height}")
 
             case b'\x04':  # char input
                 c = self.socket.recv(1).decode()
@@ -59,6 +59,8 @@ class PlayerConnection(Thread):
 
         tty_id = self.get_int()
         self.tty = tty_to_fd(tty_id)
+
+        self.name = self.get_str().decode("utf-8")
 
         # Once initialized, call `on_connect()`
         self._on_connect(self)
@@ -82,6 +84,13 @@ class PlayerConnection(Thread):
         value = struct.unpack("<i", self.socket.recv(4))
         self.socket.settimeout(None)
         return value[0]
+
+    def get_str(self):
+        self.socket.settimeout(1)
+        length = int.from_bytes(self.socket.recv(1), 1, "little")
+        value = self.socket.recv(length)
+        self.socket.settimeout(None)
+        return value
 
     def close(self):
         tty_close(self.tty)

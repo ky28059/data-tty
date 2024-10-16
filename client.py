@@ -13,7 +13,8 @@ conn.connect(("localhost", int(sys.argv[1])))
 
 
 id = int(subprocess.run(['tty'], stdout=subprocess.PIPE).stdout[9:-1].decode())
-conn.send(b'\x01' + struct.pack("<I", id))
+uname = subprocess.run(['whoami'], stdout=subprocess.PIPE).stdout[:-1]
+conn.send(b'\x01' + struct.pack("<I", id) + int.to_bytes(len(uname), 1, "little") + uname)
 
 def getch():
     fd = sys.stdin.fileno()

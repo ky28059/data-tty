@@ -13,13 +13,13 @@ class CoordServer(GameServer):
         self.player_coords = {}
 
     def on_connect(self, conn):
-        print('Received connection from', conn.tty)
+        print('Received connection from', conn.name)
         conn.write(b'hiii\n')
 
         self.player_coords[conn.tty] = [0, 0]
 
     def on_disconnect(self, conn):
-        print('Lost connection to', conn.tty)
+        print('Lost connection to', conn.name)
         del self.player_coords[conn.tty]
 
     def on_input(self, conn, key: str):
