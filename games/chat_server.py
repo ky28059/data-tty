@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).parent.parent.parent))
+sys.path.append(str(Path(__file__).parent.parent))
 
 from util.game_server import GameServer
 from util.player_conn import PlayerConnection
