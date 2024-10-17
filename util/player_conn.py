@@ -11,7 +11,8 @@ class PlayerConnection(Thread):
         self,
         client_socket: socket.socket,
         on_connect: Callable[[Any], None],  # TODO: "self"
-        on_disconnect: Callable[[Any], None],  # TODO: "self"
+        on_disconnect: Callable[[Any], None],
+        on_resize: Callable[[Any], None],
         on_input: Callable[[Any, str], None],
     ):
         super().__init__(daemon=True)
@@ -27,6 +28,7 @@ class PlayerConnection(Thread):
         self._on_connect = on_connect
         self._on_disconnect = on_disconnect
         self._on_input = on_input
+        self._on_resize = on_resize
 
     def process_packet(self):
         packet_type = self.socket.recv(1)
@@ -40,6 +42,7 @@ class PlayerConnection(Thread):
             case b'\x02':  # resize packet
                 self.width = self.get_int()
                 self.height = self.get_int()
+                self._on_resize(self)
 
             case b'\x04':  # char input
                 c = self.socket.recv(1).decode()

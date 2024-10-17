@@ -22,29 +22,33 @@ class CoordServer(GameServer):
 
 
     def on_connect(self, conn):
+        self.player_buffers[conn.tty] = ""
         self.broadcast(f"{conn.name} joined the chat")
         print('Received connection from', conn.name)
 
-        self.player_buffers[conn.tty] = ""
+    def on_resize(self, conn):
+        self.draw(conn)
 
     def on_disconnect(self, conn):
         print('Lost connection to', conn.name)
         del self.player_buffers[conn.tty]
 
     def on_input(self, conn, key: str):
-        if key == "\n":
+        print(ord(key))
+        if ord(key) == 127: # backspace
+            self.player_buffers[conn.tty] = self.player_buffers[conn.tty][0:-1]
+        elif key == "\n" or key == "\r":
             # send the message
             self.broadcast(f"[{conn.name}]: {self.player_buffers[conn.tty]}")
             self.player_buffers[conn.tty] = ""
         else:
             self.player_buffers[conn.tty] += key
-            self.draw(conn)
+        self.draw(conn)
 
     def update(self):
         pass
 
     def draw(self, conn: PlayerConnection):
-        conn.write(b"\f")
         conn.write(ESC + b"[2J") # Erase
 
         # Draw textbox

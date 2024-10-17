@@ -1,6 +1,8 @@
 import sys
 from pathlib import Path
 
+from util.player_conn import PlayerConnection
+
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from util.game_server import GameServer
@@ -21,6 +23,9 @@ class CoordServer(GameServer):
     def on_disconnect(self, conn):
         print('Lost connection to', conn.name)
         del self.player_coords[conn.tty]
+
+    def on_resize(self, conn: PlayerConnection):
+        pass
 
     def on_input(self, conn, key: str):
         print(conn.width, conn.height, key)
