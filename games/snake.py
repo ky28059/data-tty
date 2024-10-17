@@ -16,7 +16,11 @@ from util.screen import Screen
 class Snake:
     head: list[int, int]
     tail: list[int, int]
+    length: int
     direction: str
+    stamina: int
+    using_stamina: bool
+    upd_idx: int
 
 MAPSIZE = (200, 100)
 MAX_FOOD = 0.3
@@ -24,7 +28,7 @@ FOOD_CONVERSION = 0.4
 
 class SnakeServer(GameServer):
     def __init__(self, port: int):
-        super().__init__(port, tick_rate=0.15)
+        super().__init__(port, tick_rate=0.08)
 
         self.map = []
         self.foodcount = 0
@@ -33,14 +37,63 @@ class SnakeServer(GameServer):
 
         self.snakes: dict[int, Snake] = {}
 
+    def check_spawn(self, point: list[int], radius: int = 2):
+        for y in range(point[1]-radius, point[1]+radius+1):
+            for x in range(point[0]-radius, point[0]+radius+1):
+                if x < 0 or x >= MAPSIZE[0] or y < 0 or y >= MAPSIZE[1]:
+                    return False
+                if self.map[y][x] != "O" and self.map[y][x] != " ":
+                    return False
+        return True
+
+    def get_spawn(self):
+        radius = 15
+        while radius > 0:
+            for _ in range(5):
+                point = [randint(0, MAPSIZE[0] - 1), randint(0, MAPSIZE[1] - 1)]
+                if self.check_spawn(point):
+                    return point
+            radius -= 2
+        return None
+
 
     def on_connect(self, conn):
-        self.snakes[conn.tty] = Snake(head=[49, 49], tail=[49,49], direction="u")
-        self.map[49][49] = "u"
+
+        spawn_point = self.get_spawn()
+        if not spawn_point:
+            conn.write("no suitable spawnpoint found")
+            conn.close()
+
+        self.snakes[conn.tty] = Snake(
+            head=spawn_point[:],
+            tail=spawn_point[:],
+            length=1,
+            direction="u",
+            using_stamina=False,
+            stamina=60,
+            upd_idx=0,
+        )
+        self.map[spawn_point[1]][spawn_point[0]] = "u"
 
     def update(self):
         for conn in self.connections:
             snake = self.snakes[conn.tty]
+
+            # Stamina calc
+            snake.upd_idx += 1
+            if not snake.using_stamina and snake.upd_idx < 3:
+                continue
+            if snake.using_stamina and snake.upd_idx < 1:
+                continue
+            if snake.using_stamina:
+                snake.stamina -= 3
+            else:
+                snake.stamina = min(snake.stamina + 2, 40)
+            if snake.stamina <= 0:
+                snake.using_stamina = False
+
+            snake.upd_idx = 0
+
             # Move the head
             self.map[snake.head[1]][snake.head[0]] = snake.direction
             match snake.direction:
@@ -54,7 +107,7 @@ class SnakeServer(GameServer):
                     snake.head[0] += 1
             if snake.head[0] < 0 or snake.head[0] >= MAPSIZE[0] or snake.head[1] < 0 or snake.head[1] >= MAPSIZE[1]:
                 # out of bounds
-                self.kill_snake(conn)
+                conn.close()
                 continue
 
             tile = self.map[snake.head[1]][snake.head[0]]
@@ -63,12 +116,13 @@ class SnakeServer(GameServer):
                 self.foodcount -= 1
                 ate = True
             if tile in ["u", "d", "l", "r", "H"]:
-                self.kill_snake(conn)
+                conn.close()
                 continue
             self.map[snake.head[1]][snake.head[0]] = "H"
 
             if not ate:
                 # Move the tail
+                snake.length += 1
                 tile = self.map[snake.tail[1]][snake.tail[0]]
                 self.map[snake.tail[1]][snake.tail[0]] = " "
                 match tile:
@@ -96,9 +150,13 @@ class SnakeServer(GameServer):
             self.draw(conn)
 
     def kill_snake(self, conn):
+        if conn.tty not in self.snakes:
+            return
         print("snake ", conn.name, " died")
         snake = self.snakes[conn.tty]
-        while snake.tail[0] != snake.head[0] and snake.tail[1] != snake.head[1]:
+        initial_move = True
+        while snake.tail[0] != snake.head[0] or snake.tail[1] != snake.head[1] or initial_move:
+            initial_move = False
             tile = self.map[snake.tail[1]][snake.tail[0]]
             self.map[snake.tail[1]][snake.tail[0]] = "O" if random() < FOOD_CONVERSION else " "
             match tile:
@@ -110,28 +168,29 @@ class SnakeServer(GameServer):
                     snake.tail[0] -= 1
                 case "r":
                     snake.tail[0] += 1
-        conn.close()
 
     def on_resize(self, conn):
         self.draw(conn)  # Redraw window on resize
 
     def on_disconnect(self, conn):
+        self.kill_snake(conn)
         print('Lost connection to', conn.name)
         del self.snakes[conn.tty]
 
     def on_input(self, conn, key: str):
-        print(ord(key))
         #27 91 65
         snake = self.snakes[conn.tty]
         match key:
             case "a":
-                if snake.direction != "r": snake.direction = "l"
+                if snake.direction != "r" and snake.length != 1: snake.direction = "l"
             case "d":
-                if snake.direction != "l": snake.direction = "r"
+                if snake.direction != "l" and snake.length != 1: snake.direction = "r"
             case "w":
-                if snake.direction != "d": snake.direction = "u"
+                if snake.direction != "d" and snake.length != 1: snake.direction = "u"
             case "s":
-                if snake.direction != "u": snake.direction = "d"
+                if snake.direction != "u" and snake.length != 1: snake.direction = "d"
+            case " ":
+                snake.using_stamina = not snake.using_stamina
 
 
 
@@ -160,6 +219,8 @@ class SnakeServer(GameServer):
                 scr.lines[y][x_min_bound-1] = ord("#")
             if x_max_bound < scr.width - 1:
                 scr.lines[y][x_max_bound] = ord("#")
+        sta = f"{snake.stamina}{'T' if snake.using_stamina else 'F'}".encode("utf-8")
+        scr.lines[y][:len(sta)] = sta
 
         conn.write(scr.to_bytes())
 
