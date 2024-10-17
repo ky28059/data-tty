@@ -86,7 +86,7 @@ class PlayerConnection(Thread):
 
 
     def write(self, data: bytes):
-        self.write_proc.write(data)
+        self.write_proc.stdin.write(data)
 
     def get_int(self):
         self.socket.settimeout(1)
