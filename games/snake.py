@@ -42,7 +42,7 @@ class SnakeServer(GameServer):
             for x in range(point[0]-radius, point[0]+radius+1):
                 if x < 0 or x >= MAPSIZE[0] or y < 0 or y >= MAPSIZE[1]:
                     return False
-                if self.map[y][x] != "O" and self.map[y][x] != " ":
+                if self.map[y][x] != "." and self.map[y][x] != " ":
                     return False
         return True
 
@@ -88,7 +88,7 @@ class SnakeServer(GameServer):
             if snake.using_stamina:
                 snake.stamina -= 3
             else:
-                snake.stamina = min(snake.stamina + 2, 40)
+                snake.stamina = min(snake.stamina + 2, 60)
             if snake.stamina <= 0:
                 snake.using_stamina = False
 
@@ -112,7 +112,7 @@ class SnakeServer(GameServer):
 
             tile = self.map[snake.head[1]][snake.head[0]]
             ate = False
-            if tile == "O":
+            if tile == ".":
                 self.foodcount -= 1
                 ate = True
             if tile in ["u", "d", "l", "r", "H"]:
@@ -140,7 +140,7 @@ class SnakeServer(GameServer):
             pos = (randint(0, MAPSIZE[0] - 1), randint(0, MAPSIZE[1] - 1))
             while self.map[pos[1]][pos[0]] != " ":
                 pos = (randint(0, MAPSIZE[0] - 1), randint(0, MAPSIZE[1] - 1))
-            self.map[pos[1]][pos[0]] = "O"
+            self.map[pos[1]][pos[0]] = "."
             self.foodcount += 1
 
         # for row in self.map:
@@ -158,7 +158,7 @@ class SnakeServer(GameServer):
         while snake.tail[0] != snake.head[0] or snake.tail[1] != snake.head[1] or initial_move:
             initial_move = False
             tile = self.map[snake.tail[1]][snake.tail[0]]
-            self.map[snake.tail[1]][snake.tail[0]] = "O" if random() < FOOD_CONVERSION else " "
+            self.map[snake.tail[1]][snake.tail[0]] = "." if random() < FOOD_CONVERSION else " "
             match tile:
                 case "u":
                     snake.tail[1] -= 1
@@ -192,6 +192,10 @@ class SnakeServer(GameServer):
             case " ":
                 snake.using_stamina = not snake.using_stamina
 
+    def get_snakes_by_length(self):
+        j = self.connections[:]
+        j.sort(key=lambda x: self.snakes[x.tty].length, reverse=True)
+        return j
 
 
     def draw(self, conn: PlayerConnection):
@@ -221,6 +225,29 @@ class SnakeServer(GameServer):
                 scr.lines[y][x_max_bound] = ord("#")
         sta = f"{snake.stamina}{'T' if snake.using_stamina else 'F'}".encode("utf-8")
         scr.lines[y][:len(sta)] = sta
+
+        # leaderboard
+
+        LEADERBOARD_WIDTH = 20
+        LEADERBOARD_HEIGHT = 10
+        scr.fill_rect(-LEADERBOARD_WIDTH-1,0,-1,LEADERBOARD_HEIGHT)
+        scr.horizontal_line(0,-LEADERBOARD_WIDTH-1, -1, "-")
+        scr.horizontal_line(LEADERBOARD_HEIGHT,-LEADERBOARD_WIDTH-1, -1, "-")
+        scr.vertical_line(-LEADERBOARD_WIDTH-1, 0, LEADERBOARD_HEIGHT, "|")
+        scr.vertical_line(-1, 0, LEADERBOARD_HEIGHT, "|")
+
+        l: list[PlayerConnection] = self.get_snakes_by_length()
+        position = l.index(conn)
+
+        for y in range(0, LEADERBOARD_HEIGHT - 2):
+            pos = position + y -( LEADERBOARD_HEIGHT - 2) // 2
+            if pos < 0 or pos >= len(l):
+                continue
+            scr.write_text(f" {l[pos].name}", -LEADERBOARD_WIDTH + 1, y + 1)
+            if pos == position:
+                scr.write_text(">", -LEADERBOARD_WIDTH + 1, y + 1)
+            lt = str(self.snakes[l[pos].tty].length)
+            scr.write_text(lt, -2 - len(lt), y + 1)
 
         conn.write(scr.to_bytes())
 

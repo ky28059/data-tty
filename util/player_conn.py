@@ -90,22 +90,30 @@ class PlayerConnection(Thread):
             try:
                 self.process_packet()
             except Exception as e:
+                print(traceback.format_exc())
                 # Stop if disconnected or if error occurs processing packet
                 break
         self.close()
 
 
     def write(self, data: bytes):
+        if self.closed:
+            return
         self.write_proc.stdin.write(data)
         self.write_proc.stdin.flush()
 
+
     def get_int(self):
+        if self.closed:
+            return None
         self.socket.settimeout(1)
         value = struct.unpack("<i", self.socket.recv(4))
         self.socket.settimeout(None)
         return value[0]
 
     def get_str(self):
+        if self.closed:
+            return None
         self.socket.settimeout(1)
         length = int.from_bytes(self.socket.recv(1), "little")
         value = self.socket.recv(length)

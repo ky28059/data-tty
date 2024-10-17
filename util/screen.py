@@ -22,7 +22,7 @@ class Screen:
         if x_end is None:
             x_end = self.width
 
-        self.lines[y][x_start:x_end] = char * (x_end - x_start)
+        self.lines[y][x_start:x_end+1] = char * (x_end - x_start + 1)
 
     def vertical_line(self, x: int, y_start: int = 0, y_end: int = None, char = b"-"):
         if y_start is None:
@@ -32,3 +32,7 @@ class Screen:
 
         for y in range(y_start, y_end):
             self.lines[y][x] = char
+
+    def fill_rect(self, x_start: int, y_start: int, x_end: int, y_end: int, char = b"-"):
+        for y in range(y_start, y_end+1):
+            self.lines[y][x_start:x_end+1] = char * (x_end-x_start + 1)
