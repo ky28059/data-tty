@@ -75,9 +75,9 @@ class PlayerConnection(Thread):
             except Exception:
                 # Stop if disconnected or if error occurs processing packet
                 break
+
         self.close()
         self._on_disconnect(self)
-
 
     def write(self, data: bytes):
         tty_write(self.tty, data)

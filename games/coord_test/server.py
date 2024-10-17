@@ -9,8 +9,8 @@ from util.game_server import GameServer
 
 
 class CoordServer(GameServer):
-    def __init__(self):
-        super().__init__(5003)
+    def __init__(self, port: int):
+        super().__init__(port)
 
         self.player_coords = {}
 
@@ -46,5 +46,7 @@ class CoordServer(GameServer):
 
 
 if __name__ == '__main__':
-    server = CoordServer()
+    port = int(sys.argv[1]) if len(sys.argv) > 1 else 5003
+
+    server = CoordServer(port)
     server.start()

@@ -7,7 +7,6 @@ from util.game_server import GameServer
 from util.player_conn import PlayerConnection
 from util.term import erase, go_to
 
-ESC = b"\x1b"
 
 class CoordServer(GameServer):
     def __init__(self, port: int):
@@ -20,7 +19,6 @@ class CoordServer(GameServer):
         self.messages.append(message)
         for conn in self.connections:
             self.draw(conn)
-
 
     def on_connect(self, conn):
         self.player_buffers[conn.tty] = ""
@@ -66,10 +64,8 @@ class CoordServer(GameServer):
         conn.write(self.player_buffers[conn.tty].encode())
 
 
-
 if __name__ == '__main__':
-    port = 5003
-    if len(sys.argv) > 1:
-        port = int(sys.argv[1])
+    port = int(sys.argv[1]) if len(sys.argv) > 1 else 5003
+
     server = CoordServer(port)
     server.start()

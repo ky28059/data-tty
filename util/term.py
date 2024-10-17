@@ -2,8 +2,10 @@ from util.player_conn import PlayerConnection
 
 ESC = b"\x1b"
 
+
 def erase(conn: PlayerConnection):
     conn.write(ESC + b"[2J")
+
 
 def go_to(conn: PlayerConnection, x: int, y: int):
     if x < 0:
