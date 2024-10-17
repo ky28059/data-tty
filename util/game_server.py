@@ -27,11 +27,13 @@ class GameServer(abc.ABC):
             (client_socket, address) = self.server.accept()
             print("Received connection: ", client_socket, address)
 
-            conn = PlayerConnection(client_socket,
-                                    on_connect=self.add_player,
-                                    on_disconnect=self.remove_player,
-                                    on_resize=self.on_resize,
-                                    on_input=self.on_input)
+            conn = PlayerConnection(
+                client_socket,
+                on_connect=self.add_player,
+                on_disconnect=self.remove_player,
+                on_resize=self.on_resize,
+                on_input=self.on_input
+            )
             conn.start()
 
     def start(self):

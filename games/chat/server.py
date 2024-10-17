@@ -17,7 +17,7 @@ class CoordServer(GameServer):
 
     def broadcast(self, message):
         self.messages.append(message)
-        for conn in self.connections:
+        for conn in self.connections:  # Draw message on all connected screens
             self.draw(conn)
 
     def on_connect(self, conn):
@@ -26,7 +26,7 @@ class CoordServer(GameServer):
         print('Received connection from', conn.name)
 
     def on_resize(self, conn):
-        self.draw(conn)
+        self.draw(conn)  # Redraw window on resize
 
     def on_disconnect(self, conn):
         print('Lost connection to', conn.name)
@@ -34,33 +34,42 @@ class CoordServer(GameServer):
         del self.player_buffers[conn.tty]
 
     def on_input(self, conn, key: str):
-        if ord(key) == 127: # backspace
+        if ord(key) == 127:
+            # Backspace; delete the last character
             self.player_buffers[conn.tty] = self.player_buffers[conn.tty][0:-1]
         elif key == "\n" or key == "\r":
-            # send the message
+            # Send the message
             self.broadcast(f"[{conn.name}]: {self.player_buffers[conn.tty]}")
             self.player_buffers[conn.tty] = ""
         else:
             self.player_buffers[conn.tty] += key
+
+        # Redraw display with new buffer
         self.draw(conn)
 
     def update(self):
         pass
 
     def draw(self, conn: PlayerConnection):
+        """
+        Draws / updates the terminal display for the given player connection.
+        :param conn: The connection to draw to.
+        """
         scr = Screen(conn)
         conn.write(scr.to_bytes())
 
         # Draw messages
         y = conn.height - 3
-        for msg in self.messages.__reversed__():
-            scr.write_text(msg, 0, y)
-            y -= 1
-            if y == -1:
+        for msg in reversed(self.messages):
+            if y <= -1:
                 break
 
+            scr.write_text(msg, 0, y)
+            y -= 1
+
         # Draw textbox
-        scr.write_text(self.player_buffers[conn.tty], 0, -1)
+        scr.write_text('> ', 0, -1)
+        scr.write_text(self.player_buffers[conn.tty], 2, -1)
         conn.write(scr.to_bytes())
 
 
