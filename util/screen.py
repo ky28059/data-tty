@@ -31,7 +31,7 @@ class Screen:
             y_end = self.height
 
         for y in range(y_start, y_end):
-            self.lines[y][x] = char
+            self.lines[y][x] = int(char)
 
     def fill_rect(self, x_start: int, y_start: int, x_end: int, y_end: int, char = b"-"):
         for y in range(y_start, y_end+1):
