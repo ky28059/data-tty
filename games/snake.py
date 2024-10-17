@@ -231,10 +231,10 @@ class SnakeServer(GameServer):
         LEADERBOARD_WIDTH = 20
         LEADERBOARD_HEIGHT = 10
         scr.fill_rect(-LEADERBOARD_WIDTH-1,0,-1,LEADERBOARD_HEIGHT)
-        scr.horizontal_line(0,-LEADERBOARD_WIDTH-1, -1, "-")
-        scr.horizontal_line(LEADERBOARD_HEIGHT,-LEADERBOARD_WIDTH-1, -1, "-")
-        scr.vertical_line(-LEADERBOARD_WIDTH-1, 0, LEADERBOARD_HEIGHT, "|")
-        scr.vertical_line(-1, 0, LEADERBOARD_HEIGHT, "|")
+        scr.horizontal_line(0,-LEADERBOARD_WIDTH-1, -1, b"-")
+        scr.horizontal_line(LEADERBOARD_HEIGHT,-LEADERBOARD_WIDTH-1, -1, b"-")
+        scr.vertical_line(-LEADERBOARD_WIDTH-1, 0, LEADERBOARD_HEIGHT, b"|")
+        scr.vertical_line(-1, 0, LEADERBOARD_HEIGHT, b"|")
 
         l: list[PlayerConnection] = self.get_snakes_by_length()
         position = l.index(conn)
