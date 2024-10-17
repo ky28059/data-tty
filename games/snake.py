@@ -122,7 +122,6 @@ class SnakeServer(GameServer):
 
             if not ate:
                 # Move the tail
-                snake.length += 1
                 tile = self.map[snake.tail[1]][snake.tail[0]]
                 self.map[snake.tail[1]][snake.tail[0]] = " "
                 match tile:
@@ -134,6 +133,8 @@ class SnakeServer(GameServer):
                         snake.tail[0] -= 1
                     case "r":
                         snake.tail[0] += 1
+            else:
+                snake.length += 1
 
         if randint(0, 2) == 1 and self.foodcount < MAPSIZE[0] * MAPSIZE[1] * MAX_FOOD:
             # spawn food
@@ -230,7 +231,7 @@ class SnakeServer(GameServer):
 
         LEADERBOARD_WIDTH = 20
         LEADERBOARD_HEIGHT = 10
-        scr.fill_rect(-LEADERBOARD_WIDTH-1,0,-1,LEADERBOARD_HEIGHT)
+        scr.fill_rect(LEADERBOARD_WIDTH-1,0,-1,LEADERBOARD_HEIGHT, b" ")
         scr.horizontal_line(0,-LEADERBOARD_WIDTH-1, -1, b"-")
         scr.horizontal_line(LEADERBOARD_HEIGHT,-LEADERBOARD_WIDTH-1, -1, b"-")
         scr.vertical_line(-LEADERBOARD_WIDTH-1, 0, LEADERBOARD_HEIGHT, b"|")
