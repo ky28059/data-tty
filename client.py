@@ -49,9 +49,12 @@ input_thread = threading.Thread(target=get_input, daemon=True)
 input_thread.start()
 
 while True:
-    c = conn.recv(1)
-    if not c:
-        print("Closed")
+    try:
+        c = conn.recv(1)
+        if not c:
+            print("Closed")
+            break
+    except:
         break
 
 input_thread.join(0.1)
