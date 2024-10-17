@@ -231,7 +231,7 @@ class SnakeServer(GameServer):
 
         LEADERBOARD_WIDTH = 20
         LEADERBOARD_HEIGHT = 10
-        scr.fill_rect(LEADERBOARD_WIDTH-1,0,-1,LEADERBOARD_HEIGHT, b" ")
+        scr.fill_rect(-LEADERBOARD_WIDTH-1,0,-1,LEADERBOARD_HEIGHT, b" ")
         scr.horizontal_line(0,-LEADERBOARD_WIDTH-1, -1, b"-")
         scr.horizontal_line(LEADERBOARD_HEIGHT,-LEADERBOARD_WIDTH-1, -1, b"-")
         scr.vertical_line(-LEADERBOARD_WIDTH-1, 0, LEADERBOARD_HEIGHT, b"|")
