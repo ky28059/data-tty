@@ -55,14 +55,14 @@ class CoordServer(GameServer):
         # Draw messages
         y = conn.height - 3
         for msg in self.messages.__reversed__():
-            go_to(0, y)
+            go_to(conn, 0, y)
             conn.write(msg.encode())
             y -= 1
             if y == -1:
                 break
 
         # Draw textbox
-        go_to(0, -1)
+        go_to(conn, 0, -1)
         conn.write(self.player_buffers[conn.tty].encode())
 
 
