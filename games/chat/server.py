@@ -49,20 +49,18 @@ class CoordServer(GameServer):
 
     def draw(self, conn: PlayerConnection):
         scr = Screen(conn)
+
+        # Draw messages
+        y = conn.height - 3
+        for msg in self.messages.__reversed__():
+            scr.write_text(msg, 0, y)
+            y -= 1
+            if y == -1:
+                break
+
+        # Draw textbox
+        scr.write_text(msg, 0, -1)
         conn.write(scr.to_bytes())
-
-        # # Draw messages
-        # y = conn.height - 3
-        # for msg in self.messages.__reversed__():
-        #     go_to(conn, 0, y)
-        #     conn.write(msg.encode())
-        #     y -= 1
-        #     if y == -1:
-        #         break
-
-        # # Draw textbox
-        # go_to(conn, 0, -1)
-        # conn.write(self.player_buffers[conn.tty].encode())
 
 
 if __name__ == '__main__':

@@ -5,12 +5,15 @@ class Screen:
     def __init__(self, conn: PlayerConnection):
         self.width = conn.width
         self.height = conn.height
-        self.chars = []
+        self.lines = []
         for _ in range(self.height):
-            self.chars.append(bytearray([b"\n"] * self.width))
+            self.lines.append(bytearray(b" " * self.width))
 
     def to_bytes(self):
         out = b""
-        for arr in self.chars:
-            out += b"".join(arr)
+        for arr in self.lines:
+            out += bytes(arr)
         return out
+
+    def write_text(self, text: str, x: int, y: int):
+        self.lines[y][x:len(text)+x] = text.encode()
