@@ -1,6 +1,7 @@
 import socket
 import struct
 import subprocess
+import traceback
 from pathlib import Path
 from threading import Thread
 from typing import Any, Callable
@@ -42,11 +43,17 @@ class PlayerConnection(Thread):
             case b'\x02':  # resize packet
                 self.width = self.get_int()
                 self.height = self.get_int() - 1
-                self._on_resize(self)
+                try:
+                    self._on_resize(self)
+                except:
+                    print(traceback.format_exc())
 
             case b'\x04':  # char input
                 c = self.socket.recv(1).decode()
-                self._on_input(self, c)
+                try:
+                    self._on_input(self, c)
+                except:
+                    print(traceback.format_exc())
 
             case _:
                 raise Exception(f"Invalid packet type {ord(packet_type)}")
@@ -72,17 +79,19 @@ class PlayerConnection(Thread):
         )
 
         # Once initialized, call `on_connect()`
-        self._on_connect(self)
+        try:
+            self._on_connect(self)
+        except:
+            print(traceback.format_exc())
 
         # Continuously read and process user input
         while True:
             try:
                 self.process_packet()
-            except Exception:
+            except Exception as e:
                 # Stop if disconnected or if error occurs processing packet
                 break
         self.close()
-        self._on_disconnect(self)
 
 
     def write(self, data: bytes):
@@ -105,4 +114,9 @@ class PlayerConnection(Thread):
     def close(self):
         self.socket.shutdown(socket.SHUT_RDWR)
         self.socket.close()
-        self.write_proc.kill()
+        self.write_proc.stdin.close()
+        self.write_proc.terminate()
+        try:
+            self._on_disconnect(self)
+        except:
+            print(traceback.format_exc())
