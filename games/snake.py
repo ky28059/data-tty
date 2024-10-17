@@ -5,7 +5,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 
 from dataclasses import dataclass
-from random import randint
+from random import randint, random
 
 from util.game_server import GameServer
 from util.player_conn import PlayerConnection
@@ -18,13 +18,16 @@ class Snake:
     tail: list[int, int]
     direction: str
 
-MAPSIZE = (100, 100)
+MAPSIZE = (200, 100)
+MAX_FOOD = 0.3
+FOOD_CONVERSION = 0.4
 
 class SnakeServer(GameServer):
     def __init__(self, port: int):
         super().__init__(port, tick_rate=0.15)
 
         self.map = []
+        self.foodcount = 0
         for _ in range(MAPSIZE[1]):
             self.map.append([" "] * MAPSIZE[0])
 
@@ -49,27 +52,18 @@ class SnakeServer(GameServer):
                     snake.head[0] -= 1
                 case "r":
                     snake.head[0] += 1
+            if snake.head[0] < 0 or snake.head[0] >= MAPSIZE[0] or snake.head[1] < 0 or snake.head[1] >= MAPSIZE[1]:
+                # out of bounds
+                self.kill_snake(conn)
+                continue
+
             tile = self.map[snake.head[1]][snake.head[0]]
             ate = False
             if tile == "O":
+                self.foodcount -= 1
                 ate = True
             if tile in ["u", "d", "l", "r", "H"]:
-                # kill the snake
-                pos = snake.tail
-                while snake.tail[0] != snake.head[0] and snake.tail[1] != snake.head[1]:
-                    tile = self.map[snake.tail[1]][snake.tail[0]]
-                    self.map[snake.tail[1]][snake.tail[0]] = " "
-                    match tile:
-                        case "u":
-                            snake.tail[1] -= 1
-                        case "d":
-                            snake.tail[1] += 1
-                        case "l":
-                            snake.tail[0] -= 1
-                        case "r":
-                            snake.tail[0] += 1
-                print("snake died")
-                conn.close()
+                self.kill_snake(conn)
                 continue
             self.map[snake.head[1]][snake.head[0]] = "H"
 
@@ -87,12 +81,13 @@ class SnakeServer(GameServer):
                     case "r":
                         snake.tail[0] += 1
 
-        if randint(0, 2) == 1:
+        if randint(0, 2) == 1 and self.foodcount < MAPSIZE[0] * MAPSIZE[1] * MAX_FOOD:
             # spawn food
             pos = (randint(0, MAPSIZE[0] - 1), randint(0, MAPSIZE[1] - 1))
             while self.map[pos[1]][pos[0]] != " ":
                 pos = (randint(0, MAPSIZE[0] - 1), randint(0, MAPSIZE[1] - 1))
             self.map[pos[1]][pos[0]] = "O"
+            self.foodcount += 1
 
         # for row in self.map:
         #     print("".join(row))
@@ -100,6 +95,22 @@ class SnakeServer(GameServer):
         for conn in self.connections:
             self.draw(conn)
 
+    def kill_snake(self, conn):
+        print("snake ", conn.name, " died")
+        snake = self.snakes[conn.tty]
+        while snake.tail[0] != snake.head[0] and snake.tail[1] != snake.head[1]:
+            tile = self.map[snake.tail[1]][snake.tail[0]]
+            self.map[snake.tail[1]][snake.tail[0]] = "O" if random() < FOOD_CONVERSION else " "
+            match tile:
+                case "u":
+                    snake.tail[1] -= 1
+                case "d":
+                    snake.tail[1] += 1
+                case "l":
+                    snake.tail[0] -= 1
+                case "r":
+                    snake.tail[0] += 1
+        conn.close()
 
     def on_resize(self, conn):
         self.draw(conn)  # Redraw window on resize
@@ -114,13 +125,13 @@ class SnakeServer(GameServer):
         snake = self.snakes[conn.tty]
         match key:
             case "a":
-                snake.direction = "l"
+                if snake.direction != "r": snake.direction = "l"
             case "d":
-                snake.direction = "r"
+                if snake.direction != "l": snake.direction = "r"
             case "w":
-                snake.direction = "u"
+                if snake.direction != "d": snake.direction = "u"
             case "s":
-                snake.direction = "d"
+                if snake.direction != "u": snake.direction = "d"
 
 
 
@@ -145,10 +156,10 @@ class SnakeServer(GameServer):
             if map_y < 0 or map_y > MAPSIZE[1] - 1:
                 continue
             scr.lines[y][x_min_bound:x_max_bound] = bytes("".join(self.map[map_y][map_sx:map_sx+x_max_bound-x_min_bound]), "utf-8")
-            if x_min_bound > 0:
-                scr.lines[y][x_min_bound-1] = b"#"
-            if x_max_bound < scr.width:
-                scr.lines[y][x_max_bound+1] = b"#"
+            if x_min_bound > 1:
+                scr.lines[y][x_min_bound-1] = ord("#")
+            if x_max_bound < scr.width - 1:
+                scr.lines[y][x_max_bound] = ord("#")
 
         conn.write(scr.to_bytes())
 
