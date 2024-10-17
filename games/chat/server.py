@@ -49,6 +49,7 @@ class CoordServer(GameServer):
 
     def draw(self, conn: PlayerConnection):
         scr = Screen(conn)
+        conn.write(scr.to_bytes())
 
         # Draw messages
         y = conn.height - 3
@@ -59,7 +60,7 @@ class CoordServer(GameServer):
                 break
 
         # Draw textbox
-        scr.write_text(msg, 0, -1)
+        scr.write_text(self.player_buffers[conn.tty], 0, -1)
         conn.write(scr.to_bytes())
 
 
