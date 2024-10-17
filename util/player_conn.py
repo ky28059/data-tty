@@ -1,7 +1,6 @@
 import socket
 import struct
 import subprocess
-import tempfile
 from pathlib import Path
 from threading import Thread
 from typing import Any, Callable
@@ -64,12 +63,13 @@ class PlayerConnection(Thread):
         self.tty = self.get_int()
         self.name = Path(f"/dev/pts/{self.tty}").owner()
 
-        self.write_file = tempfile.TemporaryFile()
         self.write_proc = subprocess.Popen(
-            ["write", self.name, f"/dev/pts/{self.tty}"],
-            stdin=self.write_file,
+            f"write {self.name} /dev/pts/{self.tty}",
+            stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE)
+            stderr=subprocess.PIPE,
+            shell=True
+        )
 
         # Once initialized, call `on_connect()`
         self._on_connect(self)
@@ -86,8 +86,7 @@ class PlayerConnection(Thread):
 
 
     def write(self, data: bytes):
-        self.write_file.write(data)
-        self.write_file.flush()
+        self.write_proc.write(data)
 
     def get_int(self):
         self.socket.settimeout(1)
@@ -105,5 +104,4 @@ class PlayerConnection(Thread):
     def close(self):
         self.socket.shutdown(socket.SHUT_RDWR)
         self.socket.close()
-        self.write_file.close()
         self.write_proc.kill()

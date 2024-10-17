@@ -12,7 +12,7 @@ class Screen:
     def to_bytes(self):
         out = b""
         for arr in self.lines:
-            out += bytes(arr)
+            out += bytes(arr) + b'\n'
         return out
 
     def write_text(self, text: str, x: int, y: int):
