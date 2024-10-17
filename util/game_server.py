@@ -30,6 +30,7 @@ class GameServer(abc.ABC):
             conn = PlayerConnection(client_socket,
                                     on_connect=self.add_player,
                                     on_disconnect=self.remove_player,
+                                    on_resize=self.on_resize,
                                     on_input=self.on_input)
             conn.start()
 
@@ -57,6 +58,10 @@ class GameServer(abc.ABC):
 
     @abc.abstractmethod
     def on_disconnect(self, conn: PlayerConnection):
+        pass
+
+    @abc.abstractmethod
+    def on_resize(self, conn: PlayerConnection):
         pass
 
     @abc.abstractmethod
