@@ -7,7 +7,7 @@ class Screen:
         self.height = conn.height - 1
         self.lines = []
         for i in range(self.height):
-            self.lines.append(bytearray(bytes(chr(i+65), encoding="utf-8") * self.width))
+            self.lines.append(bytearray(b' ' * self.width))
 
     def to_bytes(self):
         out = b""

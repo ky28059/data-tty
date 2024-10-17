@@ -30,10 +30,10 @@ class CoordServer(GameServer):
 
     def on_disconnect(self, conn):
         print('Lost connection to', conn.name)
+        self.broadcast(f"{conn.name} left the chat")
         del self.player_buffers[conn.tty]
 
     def on_input(self, conn, key: str):
-        print(ord(key))
         if ord(key) == 127: # backspace
             self.player_buffers[conn.tty] = self.player_buffers[conn.tty][0:-1]
         elif key == "\n" or key == "\r":
