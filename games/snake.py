@@ -183,13 +183,13 @@ class SnakeServer(GameServer):
         snake = self.snakes[conn.tty]
         match key:
             case "a":
-                if snake.direction != "r" and snake.length != 1: snake.direction = "l"
+                if snake.direction != "r" or snake.length == 1: snake.direction = "l"
             case "d":
-                if snake.direction != "l" and snake.length != 1: snake.direction = "r"
+                if snake.direction != "l" or snake.length == 1: snake.direction = "r"
             case "w":
-                if snake.direction != "d" and snake.length != 1: snake.direction = "u"
+                if snake.direction != "d" or snake.length == 1: snake.direction = "u"
             case "s":
-                if snake.direction != "u" and snake.length != 1: snake.direction = "d"
+                if snake.direction != "u" or snake.length == 1: snake.direction = "d"
             case " ":
                 snake.using_stamina = not snake.using_stamina
 
