@@ -4,7 +4,7 @@ from util.player_conn import PlayerConnection
 class Screen:
     def __init__(self, conn: PlayerConnection):
         self.width = conn.width
-        self.height = conn.height - 1
+        self.height = conn.height
         self.lines = []
         for i in range(self.height):
             self.lines.append(bytearray(b' ' * self.width))

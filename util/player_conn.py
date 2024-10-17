@@ -41,7 +41,7 @@ class PlayerConnection(Thread):
 
             case b'\x02':  # resize packet
                 self.width = self.get_int()
-                self.height = self.get_int()
+                self.height = self.get_int() - 1
                 self._on_resize(self)
 
             case b'\x04':  # char input
