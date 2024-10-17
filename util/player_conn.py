@@ -21,6 +21,7 @@ class PlayerConnection(Thread):
         self.socket = client_socket
         self.tty = None
         self.name = None
+        self.closed = False
 
         self.width = 80
         self.height = 25
@@ -112,6 +113,9 @@ class PlayerConnection(Thread):
         return value
 
     def close(self):
+        if self.closed:
+            return
+        self.closed = True
         self.socket.shutdown(socket.SHUT_RDWR)
         self.socket.close()
         self.write_proc.stdin.close()
