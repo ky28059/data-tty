@@ -49,6 +49,7 @@ class PlayerConnection(Thread):
 
         match packet_type:
             case b'\x01':  # tty packet
+                self.close()
                 raise Exception("Disallowed tty packet")
 
             case b'\x02':  # resize packet
@@ -67,6 +68,7 @@ class PlayerConnection(Thread):
                     print(traceback.format_exc())
 
             case _:
+                self.close()
                 raise Exception(f"Invalid packet type {ord(packet_type)}")
 
     def run(self):
@@ -75,6 +77,7 @@ class PlayerConnection(Thread):
         self.socket.settimeout(1)
         packet_type = self.socket.recv(1)
         if packet_type != b'\x01':
+            self.close()
             raise Exception(f"Missing tty packet {packet_type}")
         self.socket.settimeout(None)
 
@@ -84,6 +87,7 @@ class PlayerConnection(Thread):
         # No spoofing !
         verification_code = self.get_int()
         if not self.verify_user(verification_code):
+            self.close()
             raise Exception(f"Attempted spoof by {self.name}, {self.tty}, {verification_code}")
 
         self.write_proc = subprocess.Popen(

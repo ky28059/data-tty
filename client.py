@@ -61,7 +61,7 @@ while True:
     try:
         c = conn.recv(1)
         if not c:
-            print("Closed")
+            print("Connection closed")
             break
     except:
         break
