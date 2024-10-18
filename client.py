@@ -1,4 +1,5 @@
 import os
+import random
 import signal
 import socket
 import struct
@@ -11,30 +12,38 @@ import tty
 conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 conn.connect(("localhost", int(sys.argv[1])))
 
-
 id = int(subprocess.run(['tty'], stdout=subprocess.PIPE).stdout[9:-1].decode())
-conn.send(b'\x01' + struct.pack("<I", id))
 
-old = None
+code_open = True
+code = random.randint(0, 999999)
+code_proc = subprocess.Popen(
+    f"python3 -c 'import time;while(True):time.sleep(1)#{str(code).zfill(6)}'",
+    stdin=subprocess.PIPE,
+    stdout=subprocess.PIPE,
+    stderr=subprocess.PIPE,
+    shell=True
+)
 
-def getch():
-    global old
-    fd = sys.stdin.fileno()
-    old = termios.tcgetattr(fd)
-    try:
-        tty.setraw(fd)
-        return sys.stdin.read(1)
-    finally:
-        termios.tcsetattr(fd, termios.TCSADRAIN, old)
+conn.send(b'\x01' + struct.pack("<I", id) + struct.pack("<I", code))
+
+stdin = sys.stdin.fileno()
+old_stdin = termios.tcgetattr(stdin)
+tty.setraw(stdin)
 
 def get_input():
+    global code_open
     while True:
-        ch = getch()
+        ch = sys.stdin.read(1)
         if ord(ch) == 3 in [3, 4, 28]:
             break
         if ord(ch) > 255:
             continue
         conn.send(b'\x04' + int.to_bytes(ord(ch), 1, "little"))
+
+        # if the connection didn't fail we can wipe the code
+        if code_open:
+            code_proc.kill()
+            code_open = False
     conn.shutdown(socket.SHUT_RDWR)
     conn.close()
 
@@ -59,4 +68,4 @@ while True:
 
 input_thread.join(0.1)
 # Revert
-termios.tcsetattr(sys.stdin.fileno(), termios.TCSADRAIN, old)
+termios.tcsetattr(sys.stdin.fileno(), termios.TCSADRAIN, old_stdin)

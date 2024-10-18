@@ -159,7 +159,11 @@ class SnakeServer(GameServer):
         while snake.tail[0] != snake.head[0] or snake.tail[1] != snake.head[1] or initial_move:
             initial_move = False
             tile = self.map[snake.tail[1]][snake.tail[0]]
-            self.map[snake.tail[1]][snake.tail[0]] = "." if random() < FOOD_CONVERSION else " "
+            if random() < FOOD_CONVERSION:
+                self.map[snake.tail[1]][snake.tail[0]] = "."
+                self.foodcount += 1
+            else:
+                self.map[snake.tail[1]][snake.tail[0]] = " "
             match tile:
                 case "u":
                     snake.tail[1] -= 1

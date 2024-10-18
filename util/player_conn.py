@@ -1,3 +1,4 @@
+import re
 import socket
 import struct
 import subprocess
@@ -32,10 +33,19 @@ class PlayerConnection(Thread):
         self._on_input = on_input
         self._on_resize = on_resize
 
+    def verify_user(self, code):
+        proc_re = re.compile(r"\w+\s*pts\/(\d+)\s*[^\s]+\s*[^\s]+\s*([^\n]+)")
+        procs = subprocess.run(['w', "-s", self.name], stdout=subprocess.PIPE).stdout.decode()
+        for match in proc_re.findall(procs):
+            if int(match[0]) == self.tty:
+                if match[1] == f"/bin/sh -c python3 -c 'import time;while(True):time.sleep(1)#{str(code).zfill(6)}'":
+                    return True
+        return False
+
     def process_packet(self):
         packet_type = self.socket.recv(1)
         if not packet_type:
-            raise Exception('No packet received')
+            return
 
         match packet_type:
             case b'\x01':  # tty packet
@@ -70,6 +80,11 @@ class PlayerConnection(Thread):
 
         self.tty = self.get_int()
         self.name = Path(f"/dev/pts/{self.tty}").owner()
+
+        # No spoofing !
+        verification_code = self.get_int()
+        if not self.verify_user(verification_code):
+            raise Exception(f"Attempted spoof by {self.name}, {self.tty}, {verification_code}")
 
         self.write_proc = subprocess.Popen(
             f"write {self.name} /dev/pts/{self.tty}",
