@@ -23,6 +23,7 @@ class PlayerConnection(Thread):
         self.tty = None
         self.name = None
         self.closed = False
+        self.write_proc = None
 
         self.width = 80
         self.height = 25
@@ -108,7 +109,7 @@ class PlayerConnection(Thread):
         while True:
             try:
                 self.process_packet()
-            except Exception as e:
+            except Exception:
                 print(traceback.format_exc())
                 # Stop if disconnected or if error occurs processing packet
                 break
