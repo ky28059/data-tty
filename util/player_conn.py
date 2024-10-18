@@ -78,7 +78,7 @@ class PlayerConnection(Thread):
         self.socket.settimeout(1)
         packet_type = self.socket.recv(1)
         if packet_type != b'\x01':
-            self.close()
+            self._close()
             raise Exception(f"Missing tty packet {packet_type}")
         self.socket.settimeout(None)
 
@@ -88,7 +88,7 @@ class PlayerConnection(Thread):
         # No spoofing !
         verification_code = self.get_int()
         if not self.verify_user(verification_code):
-            self.close()
+            self._close()
             raise Exception(f"Attempted spoof by {self.name}, {self.tty}, {verification_code}")
 
         self.write_proc = subprocess.Popen(
@@ -143,13 +143,21 @@ class PlayerConnection(Thread):
     def close(self):
         if self.closed:
             return
+        self._close()
+        try:
+            self._on_disconnect(self)
+        except:
+            print(traceback.format_exc())
+
+    def _close(self):
+        """
+        Internal close method, does not call on_disconnect callback
+        """
+        if self.closed:
+            return
         self.closed = True
         self.socket.shutdown(socket.SHUT_RDWR)
         self.socket.close()
         if self.write_proc:
             self.write_proc.stdin.close()
             self.write_proc.terminate()
-        try:
-            self._on_disconnect(self)
-        except:
-            print(traceback.format_exc())
