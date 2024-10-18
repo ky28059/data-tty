@@ -145,8 +145,9 @@ class PlayerConnection(Thread):
         self.closed = True
         self.socket.shutdown(socket.SHUT_RDWR)
         self.socket.close()
-        self.write_proc.stdin.close()
-        self.write_proc.terminate()
+        if self.write_proc:
+            self.write_proc.stdin.close()
+            self.write_proc.terminate()
         try:
             self._on_disconnect(self)
         except:
