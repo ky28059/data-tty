@@ -46,7 +46,7 @@ class PlayerConnection(Thread):
     def process_packet(self):
         packet_type = self.socket.recv(1)
         if not packet_type:
-            return
+            raise Exception("Connection closed")
 
         match packet_type:
             case b'\x01':  # tty packet
@@ -161,3 +161,4 @@ class PlayerConnection(Thread):
         if self.write_proc:
             self.write_proc.stdin.close()
             self.write_proc.terminate()
+
